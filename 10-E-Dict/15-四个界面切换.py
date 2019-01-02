@@ -129,11 +129,14 @@ class MainWindow(QDialog):
 	def btAddToBookFunc(self):
 		info = self.inputwords.text()
 		flag = Functions.addToBook(self, info)
-		print(info)
+		# print(info)
 		if not flag:
 			QMessageBox.information(self, '提示', '已添加成功！', QMessageBox.Yes)
-		else:
+		elif flag == 1:
 			QMessageBox.information(self, '提示', '已存在！', QMessageBox.Yes)
+		elif flag == 2:
+			QMessageBox.information(self, '提示', '信息为空！', QMessageBox.Yes)
+
 
 class ReviewPage(QDialog):
 	def __init__(self, *args, **kwargs):
@@ -192,13 +195,14 @@ class Functions(object):
 	def addToBook(self, info):
 		if os.path.exists('dic.csv'):
 			flag = Functions.readCSV(self, './dic.csv', info)
-			# print('flag ==  ', flag)
-			if flag:
+			if flag:  # 单词存在，返回１
 				return 1
 			else:
-				print(info)
-				Functions.writeCSV(self, './dic.csv', info)
-				print('yes already')
+				if info == '':  # 信息为空，提示'为空'
+					return 2
+				else:  # 否则写入文件
+					Functions.writeCSV(self, './dic.csv', info)
+					# print('yes already')
 		else:
 			with open('./dic.csv', "w+", newline='') as file:
 				csv_file = csv.writer(file)
@@ -217,9 +221,8 @@ class Functions(object):
 		time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		with open(path, "a+", newline='') as file:
 			csv_file = csv.writer(file)
-			data = [info, ['None'], [time], [0]]
+			data = [info, Functions.jinshanTranslateAPI(self, info).split('\n')[1::], [time], [0]]
 			csv_file.writerow(data)
-
 
 
 if __name__ == "__main__":
