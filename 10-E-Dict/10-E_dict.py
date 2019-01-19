@@ -14,6 +14,7 @@ import requests
 import csv
 import os
 import datetime
+import pandas as pd
 
 
 class MainWindow(QDialog):
@@ -113,8 +114,10 @@ class MainWindow(QDialog):
 		self.btMyInfoPage.setText("我的")
 		self.btBookPage.setText("生词本")
 
+		# 按钮的连接
 		self.btTranslatePage.clicked.connect(self.showTranslatePage)
 		self.btReviewPage.clicked.connect(self.showReviewPage)
+		self.btBookPage.clicked.connect(self.showBookPage)
 
 	def showTranslatePage(self):
 		self.translatepage = QFrame(self)
@@ -168,6 +171,52 @@ class MainWindow(QDialog):
 		self.reviewpage.resize(360, 500)
 		ReviewPage.reviewPageUi(self, self.reviewpage)
 		self.reviewpage.setVisible(True)
+
+	def showBookPage(self):
+		self.bookpage = QFrame(self)
+		self.bookpage.resize(360, 500)
+		self.wordstable = QtWidgets.QTableWidget(self.bookpage)
+		self.wordstable.setGeometry(QRect(5, 10, 350, 490))
+		self.wordstable.setObjectName("WordsTable")
+		self.wordstable.setGridStyle(Qt.DotLine)  # 虚线
+
+		self.wordsinbook = self.createTables()  # 获取生词本中的数据
+
+		self.wordstable.setColumnCount(3)
+		self.wordstable.setRowCount(self.wordsinbook.shape[0])
+		self.wordstable.horizontalHeader().setCascadingSectionResizes(True)
+		self.wordstable.setColumnWidth(0, 80)
+		self.wordstable.setColumnWidth(1, 90)
+		self.wordstable.setColumnWidth(2, 145)
+		self.wordstable.verticalHeader().setCascadingSectionResizes(False)
+		self.wordstable.verticalHeader().setDefaultSectionSize(30)
+
+		# 设置表头
+		self.wordstable.setHorizontalHeaderLabels([self.wordsinbook.columns[i] for i in [0, 2, 3]])
+
+		# 填充数据
+		for xloc in range(self.wordsinbook.shape[0]):
+			for yloc in [0, 2, 3]:
+				self.items = QTableWidgetItem(str(self.wordsinbook.iloc[xloc, yloc]))  # 必须str
+				self.items.setTextAlignment(Qt.AlignCenter|Qt.AlignVCenter)  # 水平和垂直居中
+
+				# 生词本中和显示的表格坐标不同,处理－1
+				if yloc == 0:
+					self.wordstable.setItem(xloc, yloc, self.items)
+				else:
+					self.wordstable.setItem(xloc, yloc-1, self.items)
+
+		self.wordstable.setStyleSheet("selection-background-color:pink")
+		self.wordstable.setEditTriggers(QAbstractItemView.NoEditTriggers)
+		self.wordstable.raise_()
+		self.bookpage.setVisible(True)
+
+	def createTables(self):
+		try:
+			data = pd.read_csv('dic.csv')
+			return data
+		except:
+			QMessageBox.information(self, '提示', '没有单词本，请添加单词！', QMessageBox.Yes)
 
 	def btTranslateFunc(self):  # 翻译按钮
 		info = self.inputwords.text()
@@ -266,10 +315,10 @@ class Functions(object):
 				return 0
 
 	def writeCSV(self, path, info):  # 插入词典
-		time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+		time = datetime.datetime.now().strftime('%Y-%m-%d')
 		with open(path, "a+", newline='') as file:
 			csv_file = csv.writer(file)
-			data = [info, Functions.jinshanTranslateAPI(self, info).split('\n')[1::], [time], 0]
+			data = [info, Functions.jinshanTranslateAPI(self, info).split('\n')[1::], time, 0]
 			csv_file.writerow(data)
 
 	def reqContent(self):
