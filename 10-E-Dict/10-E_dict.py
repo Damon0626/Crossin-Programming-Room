@@ -13,9 +13,12 @@ from PyQt5.QtWebEngineWidgets import *
 import requests
 import csv
 import os
+import getpass  # 获取host
 import datetime
 import pandas as pd
 import numpy as np
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
 
 
 class MainWindow(QDialog):
@@ -27,56 +30,12 @@ class MainWindow(QDialog):
 		self.setStyleSheet("background-color: rgb(255, 255, 255)")
 
 		# 每日一句
-		'''提头'''
-		self.daily_sentence_title = QLabel(self)
-		self.daily_sentence_title.setGeometry(QRect(0, 0, 360, 40))
-		font = QFont()
-		font.setPixelSize(20)
-		# font.setBold(True)
-		self.daily_sentence_title.setFont(font)
-		self.daily_sentence_title.setStyleSheet("color: rgb(255, 255, 255);\n""background-color: rgb(41, 196, 242)")
-
-		self.daily_sentence_title.setText("  每日一句")
-
-		'''图片'''
-		self.daily_sentence_pic = QLabel(self)
-		self.daily_sentence_pic.setGeometry(QRect(30, 45, 300, 170))
-		self.daily_sentence_pic.setPixmap(Functions.getImageData(self))
-		self.daily_sentence_pic.setAlignment(Qt.AlignCenter)
-
-		'''句子'''
-		self.daily_sentence_sentence_eng = QTextBrowser(self)
-		self.daily_sentence_sentence_eng.setGeometry(QRect(30, 240, 300, 80))
-		self.daily_sentence_sentence_eng.setStyleSheet("color: rgb(0, 74, 128)")
-		font = QFont()
-		font.setBold(True)
-		font.setPixelSize(15)
-		self.daily_sentence_sentence_eng.setFont(font)
-		self.daily_sentence_sentence_eng.setText(Functions.getEngSentence(self))
-		self.daily_sentence_sentence_eng.setFrameShape(QtWidgets.QFrame.NoFrame)
-
-		'''翻译'''
-		self.daily_sentence_sentence_chs = QTextBrowser(self)
-		self.daily_sentence_sentence_chs.setGeometry(QRect(30, 330, 300, 80))
-		font = QFont()
-		font.setBold(True)
-		font.setPixelSize(15)
-		self.daily_sentence_sentence_chs.setFont(font)
-		self.daily_sentence_sentence_chs.setText(Functions.getChsSentence(self))
-		self.daily_sentence_sentence_chs.setFrameShape(QtWidgets.QFrame.NoFrame)
-
-		'''注释'''
-		self.daily_sentence_ps = QTextBrowser(self)
-		self.daily_sentence_ps.setGeometry(QRect(30, 410, 300, 120))
-		self.daily_sentence_ps.setText(Functions.getPS(self)+'\n\n'+Functions.getDateLine(self))
-		self.daily_sentence_ps.setFrameShape(QtWidgets.QFrame.NoFrame)
-
+		self.dailySentence()
 
 		# 翻译页按钮
 		self.btTranslatePage = QPushButton(self)
 		self.btTranslatePage.setGeometry(QRect(15, 555, 81, 27))
 		self.btTranslatePage.setObjectName("btTranslatePage")
-
 
 		# 复习页按钮
 		self.btReviewPage = QPushButton(self)
@@ -119,10 +78,59 @@ class MainWindow(QDialog):
 		self.btTranslatePage.clicked.connect(self.showTranslatePage)
 		self.btReviewPage.clicked.connect(self.showReviewPage)
 		self.btBookPage.clicked.connect(self.showBookPage)
+		self.btMyInfoPage.clicked.connect(self.showMypage)
+
+	def dailySentence(self):
+		# 每日一句
+		'''提头'''
+		self.dailySentencePage = QFrame(self)
+		self.dailySentencePage.setGeometry(QRect(0, 0, 360, 550))
+		self.daily_sentence_title = QLabel(self.dailySentencePage)
+		self.daily_sentence_title.setGeometry(QRect(0, 0, 360, 40))
+		font = QFont()
+		font.setPixelSize(20)
+		# font.setBold(True)
+		self.daily_sentence_title.setFont(font)
+		self.daily_sentence_title.setStyleSheet("color: rgb(255, 255, 255);\n""background-color: rgb(41, 196, 242)")
+		self.daily_sentence_title.setText("  每日一句")
+
+		'''图片'''
+		self.daily_sentence_pic = QLabel(self.dailySentencePage)
+		self.daily_sentence_pic.setGeometry(QRect(30, 45, 300, 170))
+		self.daily_sentence_pic.setPixmap(Functions.getImageData(self))
+		self.daily_sentence_pic.setAlignment(Qt.AlignCenter)
+
+		'''句子'''
+		self.daily_sentence_sentence_eng = QTextBrowser(self.dailySentencePage)
+		self.daily_sentence_sentence_eng.setGeometry(QRect(30, 240, 300, 80))
+		self.daily_sentence_sentence_eng.setStyleSheet("color: rgb(0, 74, 128)")
+		font = QFont()
+		font.setBold(True)
+		font.setPixelSize(15)
+		self.daily_sentence_sentence_eng.setFont(font)
+		self.daily_sentence_sentence_eng.setText(Functions.getEngSentence(self))
+		self.daily_sentence_sentence_eng.setFrameShape(QtWidgets.QFrame.NoFrame)
+
+		'''翻译'''
+		self.daily_sentence_sentence_chs = QTextBrowser(self.dailySentencePage)
+		self.daily_sentence_sentence_chs.setGeometry(QRect(30, 330, 300, 80))
+		font = QFont()
+		font.setBold(True)
+		font.setPixelSize(15)
+		self.daily_sentence_sentence_chs.setFont(font)
+		self.daily_sentence_sentence_chs.setText(Functions.getChsSentence(self))
+		self.daily_sentence_sentence_chs.setFrameShape(QtWidgets.QFrame.NoFrame)
+
+		'''注释'''
+		self.daily_sentence_ps = QTextBrowser(self.dailySentencePage)
+		self.daily_sentence_ps.setGeometry(QRect(30, 410, 300, 120))
+		self.daily_sentence_ps.setText(Functions.getPS(self) + '\n\n' + Functions.getDateLine(self))
+		self.daily_sentence_ps.setFrameShape(QtWidgets.QFrame.NoFrame)
+		self.dailySentencePage.setVisible(True)
 
 	def showTranslatePage(self):
 		self.translatepage = QFrame(self)
-		self.translatepage.resize(360, 500)
+		self.translatepage.resize(360, 550)
 
 		# 添加生词按钮
 		self.btAddToBook = QPushButton(self.translatepage)
@@ -144,7 +152,6 @@ class MainWindow(QDialog):
 		self.btTranslate.setStyleSheet("background-color: rgb(255, 170, 127);")
 		self.btTranslate.setObjectName("btTranslate")
 		self.btTranslate.clicked.connect(self.btTranslateFunc)  # 翻译按钮的信号
-
 
 		# 输入框QLineEdit
 		self.inputwords = QLineEdit(self.translatepage)
@@ -171,7 +178,7 @@ class MainWindow(QDialog):
 
 	def showReviewPage(self):
 		self.reviewpage = QFrame(self)
-		self.reviewpage.resize(360, 500)
+		self.reviewpage.resize(360, 550)
 
 		# 获取数据
 		self.data = self.createTables()
@@ -218,7 +225,7 @@ class MainWindow(QDialog):
 
 	def showBookPage(self):
 		self.bookpage = QFrame(self)
-		self.bookpage.resize(360, 500)
+		self.bookpage.resize(360, 550)
 		self.wordstable = QtWidgets.QTableWidget(self.bookpage)
 		self.wordstable.setGeometry(QRect(5, 10, 350, 490))
 		self.wordstable.setObjectName("WordsTable")
@@ -255,6 +262,125 @@ class MainWindow(QDialog):
 		self.wordstable.raise_()
 		self.bookpage.setVisible(True)
 
+	def showMypage(self):
+		self.mypage = QFrame(self)
+		self.mypage.resize(360, 550)
+
+		# 上部份背景
+		self.top_bkground = QLabel(self.mypage)
+		self.top_bkground.setGeometry(QRect(0, 0, 360, 120))
+		self.top_bkground.setStyleSheet("background-color: rgb(77, 77, 77);")
+		self.top_bkground.setText("")
+		self.top_bkground.setObjectName("top_bkground")
+
+		# 单词总数label
+		font = QFont()
+		font.setPixelSize(12)
+		font.setFamily('Ubuntu')
+		font.setStyleName('Normal')
+		self.label_counts = QLabel(self.mypage)
+		self.label_counts.setFont(font)
+		self.label_counts.setGeometry(QRect(145, 40, 70, 17))
+		self.label_counts.setStyleSheet("color: rgb(255, 255, 255);\n""background-color: rgb(77, 77, 77);")
+		self.label_counts.setAlignment(Qt.AlignCenter)
+		self.label_counts.setObjectName("label_counts")
+		self.label_counts.setText("单词总数")
+
+		# 单词总数显示
+		font = QFont()
+		font.setBold(True)
+		font.setPixelSize(24)
+		font.setFamily('Ubuntu')
+		self.words_counts = QTextBrowser(self.mypage)
+		self.words_counts.setGeometry(QRect(120, 60, 120, 50))
+		self.words_counts.setStyleSheet("color: rgb(255, 255, 255);\n""background-color: rgb(77, 77, 77);")
+		self.words_counts.setFrameShape(QtWidgets.QFrame.NoFrame)
+		self.words_counts.setObjectName("words_counts")
+		self.words_counts.setFont(font)
+		self.words_counts.setText(str(self.createTables().shape[0]))
+		# self.words_counts.setText(str(2222))
+		self.words_counts.setAlignment(Qt.AlignCenter)
+
+		# 我的数据label
+		self.label_mydata = QLabel(self.mypage)
+		self.label_mydata.setGeometry(QRect(10, 125, 71, 17))
+		font = QFont()
+		font.setPointSize(10)
+		font.setBold(True)
+		font.setWeight(75)
+		self.label_mydata.setFont(font)
+		self.label_mydata.setStyleSheet("color: rgb(128, 128, 128);")
+		self.label_mydata.setObjectName("label_mydata")
+		self.label_mydata.setText("我的数据")
+
+		# 我的数据图表
+		self.data_display = PlotCanvas(self.mypage) # 350*190, 100分辨率
+		self.data_display.move(5, 140)
+		self.data_display.init_plot()
+
+		# 产品信息label
+		self.label_prod_info = QLabel(self.mypage)
+		self.label_prod_info.setGeometry(QRect(10, 355, 71, 17))
+		font = QFont()
+		font.setPointSize(10)
+		font.setBold(True)
+		font.setWeight(75)
+		self.label_prod_info.setFont(font)
+		self.label_prod_info.setStyleSheet("color: rgb(128, 128, 128);")
+		self.label_prod_info.setObjectName("label_prod_info")
+		self.label_prod_info.setText("产品信息")
+
+		# 产品信息内容
+		self.produc_info = QTextBrowser(self.mypage)
+		self.produc_info.setGeometry(QRect(5, 375, 350, 55))
+		self.produc_info.setStyleSheet("color: rgb(128, 128, 128);")
+		self.produc_info.setFrameShape(QtWidgets.QFrame.NoFrame)
+		self.produc_info.setObjectName("produc_info")
+		self.produc_info.setText("产品： E-dict\t\t作者： Damon0626\n版本： 19.1.20")
+
+		# 附加信息label
+		self.label_overhead_info = QLabel(self.mypage)
+		self.label_overhead_info.setGeometry(QRect(10, 430, 71, 17))
+		font = QFont()
+		font.setPointSize(10)
+		font.setBold(True)
+		font.setWeight(75)
+		self.label_overhead_info.setFont(font)
+		self.label_overhead_info.setStyleSheet("color: rgb(128, 128, 128);")
+		self.label_overhead_info.setObjectName("label_overhead_info")
+		self.label_overhead_info.setText("附加信息")
+
+		# 附加信息内容
+		self.hostname, self.path = Functions.getHostAndPath(self)
+		self.overhead_info = QTextBrowser(self.mypage)
+		self.overhead_info.setGeometry(QRect(5, 450, 350, 70))
+		self.overhead_info.setStyleSheet("color: rgb(128, 128, 128);")
+		self.overhead_info.setFrameShape(QtWidgets.QFrame.NoFrame)
+		self.overhead_info.setObjectName("overhead_info")
+		self.overhead_info.setText("主机名称："+self.hostname+'\n'+"生词本路径："+self.path+'/dic.csv')
+
+		# 返回每日一句按钮的背景
+		self.label_daily_sentence_bg = QLabel(self.mypage)
+		self.label_daily_sentence_bg.setGeometry(QRect(0, 520, 360, 30))
+		self.label_daily_sentence_bg.setStyleSheet("background-color: rgb(41, 196, 242);")
+		self.label_daily_sentence_bg.setText("")
+		self.label_daily_sentence_bg.setObjectName("label_daily_sentence_bg")
+
+		# 返回每日一句按钮
+		self.btBackDailySentence = QPushButton(self.mypage)
+		self.btBackDailySentence.setGeometry(QRect(0, 520, 360, 30))
+		font = QFont()
+		font.setBold(True)
+		font.setWeight(75)
+		self.btBackDailySentence.setFont(font)
+		self.btBackDailySentence.setStyleSheet("color: rgb(255, 255, 255);")
+		self.btBackDailySentence.setFlat(True)
+		self.btBackDailySentence.setObjectName("btBackDailySentence")
+		self.btBackDailySentence.setText("每日一句")
+		self.btBackDailySentence.clicked.connect(self.dailySentence)
+
+		self.mypage.setVisible(True)
+
 	def createTables(self):  # 填充生词本的数据
 		try:
 			data = pd.read_csv('dic.csv')
@@ -267,7 +393,6 @@ class MainWindow(QDialog):
 		text = Functions.jinshanTranslateAPI(self, info)
 		self.textviewTranslate.setText(text)
 		self.btAddToBook.setEnabled(True)
-
 
 	def btAddToBookFunc(self):
 		info = self.inputwords.text()
@@ -374,6 +499,57 @@ class Functions(object):
 	def getDateLine(self):
 		req_contents = Functions.reqContent(self)
 		return req_contents['dateline']
+
+	def getHostAndPath(self):
+		path = os.getcwd()
+		hostname = getpass.getuser()
+		return hostname, path
+
+
+class PlotCanvas(FigureCanvas):
+
+	def __init__(self, parent=None):
+		plt.style.use('ggplot')
+		fig = plt.figure(figsize=(3.5, 1.9), dpi=100)
+		self.axes = fig.add_subplot(111)
+
+		FigureCanvas.__init__(self, fig)
+		self.setParent(parent)
+		FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
+		FigureCanvas.updateGeometry(self)
+		self.init_plot()
+
+	def init_plot(self):
+		# 初始值
+		x = ["Mon", "Tues", "Whe", "Thur", "Fri", "Sat", "Sun"]
+		y = [0, 0, 0, 0, 0, 0, 0]
+
+		# 建立插入时间的集合
+		insertTimeList = MainWindow.createTables(self)['insert_time']
+		insertTimeSet = {}
+		for time in insertTimeList:
+			insertTimeSet[time] = list(insertTimeList).count(time)
+
+		# 获取当前日期和星期
+		weekToday = datetime.datetime.now().weekday()  # 0-6表示周一到周日
+		dayToday = datetime.datetime.now().strftime("%Y-%m-%d")
+
+		# 创建要显示的日期集合
+		dateToDispaly = []
+		for i in range(weekToday):
+			dateToDispaly.append((datetime.datetime.now()-datetime.timedelta(days=weekToday-i)).strftime("%Y-%m-%d"))
+		dateToDispaly.append(dayToday)
+
+		# 如果插入时间中有当前日期，则显示其数量，否则为0
+		for date in dateToDispaly:
+			if date in insertTimeSet:
+				y[dateToDispaly.index(date)] = insertTimeSet[date]
+			else:
+				continue
+
+		plt.bar(x, y)
+		plt.xticks(size=8)
+		plt.title("Words added this week", color='black', fontsize=10)
 
 
 if __name__ == "__main__":
