@@ -15,6 +15,7 @@ import csv
 import os
 import datetime
 import pandas as pd
+import numpy as np
 
 
 class MainWindow(QDialog):
@@ -131,6 +132,7 @@ class MainWindow(QDialog):
 		self.btAddToBook.setFont(font)
 		self.btAddToBook.setStyleSheet("background-color: rgb(255, 170, 127);")
 		self.btAddToBook.setObjectName("btAddToBook")
+		self.btAddToBook.setEnabled(False)
 		self.btAddToBook.clicked.connect(self.btAddToBookFunc)  # 添加生词按钮的信号
 
 		# 翻译按钮
@@ -142,6 +144,7 @@ class MainWindow(QDialog):
 		self.btTranslate.setStyleSheet("background-color: rgb(255, 170, 127);")
 		self.btTranslate.setObjectName("btTranslate")
 		self.btTranslate.clicked.connect(self.btTranslateFunc)  # 翻译按钮的信号
+
 
 		# 输入框QLineEdit
 		self.inputwords = QLineEdit(self.translatepage)
@@ -169,8 +172,49 @@ class MainWindow(QDialog):
 	def showReviewPage(self):
 		self.reviewpage = QFrame(self)
 		self.reviewpage.resize(360, 500)
-		ReviewPage.reviewPageUi(self, self.reviewpage)
+
+		# 获取数据
+		self.data = self.createTables()
+		self.reviewWordLoc = self.getRandomMinLoc()
+
+		# 复习单词显示框
+		self.wordsToReview = QTextBrowser(self.reviewpage)
+		self.wordsToReview.setGeometry(QRect(60, 90, 250, 75))
+		self.wordsToReview.setObjectName("wordsToReview")
+		self.wordsToReview.setText(self.data['words'][self.reviewWordLoc])  # 次数最少的随机一个单词
+		font = QFont()
+		font.setPointSize(25)
+		self.wordsToReview.setFont(font)
+		self.wordsToReview.setAlignment(Qt.AlignCenter)
+
+		# 复习单词提示框
+		self.textviewTranslate = QTextBrowser(self.reviewpage)
+		self.textviewTranslate.setGeometry(QRect(60, 190, 250, 190))
+		self.textviewTranslate.setMaximumSize(QSize(250, 190))
+		self.textviewTranslate.setObjectName("textviewTranslate")
+
+		# 提示按钮
+		self.btTips = QPushButton(self.reviewpage)
+		self.btTips.setGeometry(QRect(150, 420, 81, 27))
+		font = QFont()
+		font.setFamily("AR PL UKai CN")
+		self.btTips.setFont(font)
+		self.btTips.setStyleSheet("background-color: rgb(255, 170, 127);")
+		self.btTips.setObjectName("btTips")
+		self.btTips.setText("提示")
+		self.btTips.clicked.connect(self.tipsInformation)
+
+		# 下一个按钮
+		self.btNextWord = QPushButton(self.reviewpage)
+		self.btNextWord.setGeometry(QRect(250, 420, 81, 27))
+		font = QFont()
+		font.setFamily("AR PL UKai CN")
+		self.btNextWord.setFont(font)
+		self.btNextWord.setStyleSheet("background-color: rgb(255, 170, 127);")
+		self.btNextWord.setObjectName("btNextWord")
+		self.btNextWord.setText("下一词")
 		self.reviewpage.setVisible(True)
+		self.btNextWord.clicked.connect(self.nextWordPlus1)
 
 	def showBookPage(self):
 		self.bookpage = QFrame(self)
@@ -211,7 +255,7 @@ class MainWindow(QDialog):
 		self.wordstable.raise_()
 		self.bookpage.setVisible(True)
 
-	def createTables(self):
+	def createTables(self):  # 填充生词本的数据
 		try:
 			data = pd.read_csv('dic.csv')
 			return data
@@ -222,6 +266,8 @@ class MainWindow(QDialog):
 		info = self.inputwords.text()
 		text = Functions.jinshanTranslateAPI(self, info)
 		self.textviewTranslate.setText(text)
+		self.btAddToBook.setEnabled(True)
+
 
 	def btAddToBookFunc(self):
 		info = self.inputwords.text()
@@ -233,43 +279,21 @@ class MainWindow(QDialog):
 			QMessageBox.information(self, '提示', '已存在！', QMessageBox.Yes)
 		elif flag == 2:
 			QMessageBox.information(self, '提示', '信息为空！', QMessageBox.Yes)
+		self.btAddToBook.setEnabled(False)
 
+	def tipsInformation(self):
+		self.textviewTranslate.setText(self.data['means'][self.reviewWordLoc])
 
-class ReviewPage(QDialog):
-	def __init__(self, *args, **kwargs):
-		super().__init__(self, *args, **kwargs)
+	def nextWordPlus1(self):
+		self.data.iloc[self.reviewWordLoc, 3] += 1  # 点击下一次认为复习了一次
+		pd.DataFrame.to_csv(self.data, 'dic.csv', index=None)  # 保证重新写入的与原来一致
+		self.showReviewPage()  # 清屏处理
 
-	def reviewPageUi(self, Form):
-		self.btTips = QPushButton(Form)
-		self.btTips.setGeometry(QRect(150, 420, 81, 27))
-		font = QFont()
-		font.setFamily("AR PL UKai CN")
-		self.btTips.setFont(font)
-		self.btTips.setStyleSheet("background-color: rgb(255, 170, 127);")
-		self.btTips.setObjectName("btTips")
-
-		# 复习单词显示框
-		self.wordsToReview = QTextBrowser(Form)
-		self.wordsToReview.setGeometry(QRect(60, 90, 250, 75))
-		self.wordsToReview.setObjectName("wordsToReview")
-
-		# 复习单词提示框
-		self.textviewTranslate = QTextBrowser(Form)
-		self.textviewTranslate.setGeometry(QRect(60, 190, 250, 190))
-		self.textviewTranslate.setMaximumSize(QSize(250, 190))
-		self.textviewTranslate.setObjectName("textviewTranslate")
-
-		# 下一个按钮
-		self.btNextWord = QPushButton(Form)
-		self.btNextWord.setGeometry(QRect(250, 420, 81, 27))
-		font = QFont()
-		font.setFamily("AR PL UKai CN")
-		self.btNextWord.setFont(font)
-		self.btNextWord.setStyleSheet("background-color: rgb(255, 170, 127);")
-		self.btNextWord.setObjectName("btNextWord")
-
-		self.btTips.setText("提示")
-		self.btNextWord.setText("下一词")
+	def getRandomMinLoc(self):
+		allLocs = np.where(self.data['have_review_times'] == np.min(self.data['have_review_times']))[0]  # 所有最小
+		choseLoc = np.random.choice(allLocs)  # 随机选取1个
+		# print(choseLoc)
+		return choseLoc
 
 
 class Functions(object):
