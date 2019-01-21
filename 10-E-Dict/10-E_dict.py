@@ -188,7 +188,12 @@ class MainWindow(QDialog):
 		self.wordsToReview = QTextBrowser(self.reviewpage)
 		self.wordsToReview.setGeometry(QRect(60, 90, 250, 75))
 		self.wordsToReview.setObjectName("wordsToReview")
-		self.wordsToReview.setText(self.data['words'][self.reviewWordLoc])  # 次数最少的随机一个单词
+
+		if self.reviewWordLoc == None:  # 0的话，屏蔽第一个位置
+			self.wordsToReview.setText("")
+		else:
+			self.wordsToReview.setText(self.data['words'][self.reviewWordLoc])  # 次数最少的随机一个单词
+
 		font = QFont()
 		font.setPointSize(25)
 		self.wordsToReview.setFont(font)
@@ -220,8 +225,12 @@ class MainWindow(QDialog):
 		self.btNextWord.setStyleSheet("background-color: rgb(255, 170, 127);")
 		self.btNextWord.setObjectName("btNextWord")
 		self.btNextWord.setText("下一词")
-		self.reviewpage.setVisible(True)
 		self.btNextWord.clicked.connect(self.nextWordPlus1)
+
+
+
+		self.reviewpage.setVisible(True)
+
 
 	def showBookPage(self):
 		self.bookpage = QFrame(self)
@@ -386,13 +395,20 @@ class MainWindow(QDialog):
 			data = pd.read_csv('dic.csv')
 			return data
 		except:
-			QMessageBox.information(self, '提示', '没有单词本，请添加单词！', QMessageBox.Yes)
+			QMessageBox.information(self, '提示', '没有单词本，已初始化单词本！', QMessageBox.Yes)
+			Functions.addToBook(self, None)
+			return pd.read_csv('dic.csv')
 
 	def btTranslateFunc(self):  # 翻译按钮
 		info = self.inputwords.text()
 		text = Functions.jinshanTranslateAPI(self, info)
-		self.textviewTranslate.setText(text)
 		self.btAddToBook.setEnabled(True)
+
+		if not text:
+			text = "Error:\n place check for your network or input something..."
+			self.btAddToBook.setEnabled(False)
+		self.textviewTranslate.setText(text)
+
 
 	def btAddToBookFunc(self):
 		info = self.inputwords.text()
@@ -403,22 +419,33 @@ class MainWindow(QDialog):
 		elif flag == 1:
 			QMessageBox.information(self, '提示', '已存在！', QMessageBox.Yes)
 		elif flag == 2:
-			QMessageBox.information(self, '提示', '信息为空！', QMessageBox.Yes)
-		self.btAddToBook.setEnabled(False)
+			self.btAddToBook.setEnabled(False)
+			QMessageBox.information(self, '提示', '信息为空或信息有误！', QMessageBox.Yes)
+
+
 
 	def tipsInformation(self):
-		self.textviewTranslate.setText(self.data['means'][self.reviewWordLoc])
+		if self.data.empty:
+			self.textviewTranslate.setText("")
+		else:
+			self.textviewTranslate.setText(self.data['means'][self.reviewWordLoc])
 
 	def nextWordPlus1(self):
-		self.data.iloc[self.reviewWordLoc, 3] += 1  # 点击下一次认为复习了一次
-		pd.DataFrame.to_csv(self.data, 'dic.csv', index=None)  # 保证重新写入的与原来一致
-		self.showReviewPage()  # 清屏处理
+		if self.data.empty:
+			QMessageBox.information(self, '提示', '没有单词', QMessageBox.Yes)
+		else:
+			self.data.iloc[self.reviewWordLoc, 3] += 1  # 点击下一次认为复习了一次
+			pd.DataFrame.to_csv(self.data, 'dic.csv', index=None)  # 保证重新写入的与原来一致
+			self.showReviewPage()  # 清屏处理
 
 	def getRandomMinLoc(self):
-		allLocs = np.where(self.data['have_review_times'] == np.min(self.data['have_review_times']))[0]  # 所有最小
-		choseLoc = np.random.choice(allLocs)  # 随机选取1个
-		# print(choseLoc)
-		return choseLoc
+		if self.data.empty:
+			return None
+		else:
+			allLocs = np.where(self.data['have_review_times'] == np.min(self.data['have_review_times']))[0]  # 所有最小
+			choseLoc = np.random.choice(allLocs)  # 随机选取1个
+			# print(choseLoc)
+			return choseLoc
 
 
 class Functions(object):
@@ -436,7 +463,7 @@ class Functions(object):
 				text.append(str(i['part']) + ' ' + str(','.join(i['means'])))
 			return '\n'.join(text)
 		except:
-			return "Error:\n place check for your network or input something..."
+			return 0
 
 	def addToBook(self, info):
 		if os.path.exists('dic.csv'):
@@ -444,7 +471,7 @@ class Functions(object):
 			if flag:  # 单词存在，返回１
 				return 1
 			else:
-				if info == '':  # 信息为空，提示'为空'
+				if info == '' or (not Functions.jinshanTranslateAPI(self, info)):  # 信息为空，提示'为空或错误'
 					return 2
 				else:  # 否则写入文件
 					Functions.writeCSV(self, './dic.csv', info)
@@ -548,7 +575,15 @@ class PlotCanvas(FigureCanvas):
 				continue
 
 		plt.bar(x, y)
+		for a, b in zip(x, y):
+			plt.text(a, b, '%.0f' % b, ha='center', va='bottom', fontsize=7)
 		plt.xticks(size=8)
+		plt.yticks([])
+		plt.ylim((0, max(y)*1.1+0.1))
+
+		# 由于全是0纵坐标显示小数,不合理,遂将坐标轴去掉,换成数值显示
+
+
 		plt.title("Words added this week", color='black', fontsize=10)
 
 
