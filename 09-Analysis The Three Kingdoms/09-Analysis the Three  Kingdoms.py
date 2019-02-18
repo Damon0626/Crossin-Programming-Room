@@ -248,7 +248,7 @@ if __name__ == "__main__":
 	anylysisThreeKindoms.everyHeroAppearTimes('sanguo.txt', 'handledTopNames.csv')
 
 	# 根据上面清单去掉同一个人的不同称呼，得到handledTopNames.xlsx
-	anylysisThreeKindoms.occurrencesTop10('handledTopNames.xlsx', '出场Top10.html')
+	anylysisThreeKindoms.occurrencesTop10('handledTopNames.xlsx', 'top10.html')
 	anylysisThreeKindoms.makeWordCloud('sanguo.txt', 'zhu.png')
 	anylysisThreeKindoms.appearEachEpisode('sanguo.txt', 'appearEachEpisode.xlsx')
 	anylysisThreeKindoms.drawPicture('appearEachEpisode.xlsx')
